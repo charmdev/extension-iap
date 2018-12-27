@@ -11,6 +11,9 @@ extern "C" void sendPurchaseDownloadEvent(const char* type, const char* productI
 extern "C" void sendPurchaseProductDataEvent(const char* type, const char* productID, const char* localizedTitle, const char* localizedDescription, int priceAmountMicros, const char* localizedPrice, const char* priceCurrencyCode);
 
 
+@interface NMEAppDelegate : UIResponder <UIApplicationDelegate>
+@end
+
 @interface InAppPurchase: NSObject <SKProductsRequestDelegate, SKPaymentTransactionObserver>
 {
     SKProduct* myProduct;
@@ -19,6 +22,7 @@ extern "C" void sendPurchaseProductDataEvent(const char* type, const char* produ
 	bool manualTransactionMode;
 }
 
+//+ (instancetype)sharedInstance;
 - (void)initInAppPurchase;
 - (void)restorePurchases;
 - (BOOL)canMakePurchases;
@@ -29,13 +33,54 @@ extern "C" void sendPurchaseProductDataEvent(const char* type, const char* produ
 @property bool manualTransactionMode;
 @end
 
-@implementation InAppPurchase
-@synthesize manualTransactionMode;
+@implementation NMEAppDelegate(UIApplicationDelegate)
 
-#pragma Public methods 
+
+	-(BOOL)application:(UIApplication *)application willFinishLaunchingWithOptions:(NSDictionary *) launchOptions
+    {
+        NSLog(@"InAppPurchase willFinishLaunching");
+
+		//[[SKPaymentQueue defaultQueue] addTransactionObserver:[InAppPurchase sharedInstance]];
+        
+        return YES;
+    }
+
+@end
+
+@implementation InAppPurchase
+@synthesize manualTransactionMode; 
+
+/*
++ (instancetype)sharedInstance
+{
+  static InAppPurchase *_sharedInstance;
+  static dispatch_once_t onceToken;
+  dispatch_once(&onceToken, ^{
+    _sharedInstance = [[self alloc] _init];
+  });
+  return _sharedInstance;
+}
+
+- (instancetype)_init
+{
+  NSLog(@"InAppPurchase: _init");
+  manualTransactionMode = false;
+  //sendPurchaseEvent("started", "");
+  
+  return self;
+}
+
+- (instancetype)init
+{
+  return nil;
+}
+*/
+
+#pragma Public methods
 
 - (void)initInAppPurchase 
 {
+	//
     static dispatch_once_t onceToken;
     
 	manualTransactionMode = false;
@@ -43,7 +88,7 @@ extern "C" void sendPurchaseProductDataEvent(const char* type, const char* produ
     dispatch_once(&onceToken, ^{
         [[SKPaymentQueue defaultQueue] addTransactionObserver:self];
     });
-	
+	//
 	sendPurchaseEvent("started", "");
 }
 
@@ -341,6 +386,7 @@ extern "C"
 	void initInAppPurchase()
     {
     	printf("init inapppurchase --------------------------------------------------- xx\n");
+		//inAppPurchase = [InAppPurchase sharedInstance];
 		inAppPurchase = [[InAppPurchase alloc] init];
 		[inAppPurchase initInAppPurchase];
 	}

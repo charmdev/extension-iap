@@ -147,7 +147,7 @@ public class InAppPurchase extends Extension {
 		}
 	}
 
-	private static void fireCallback(String name, Object payload)
+	private static void fireCallback(final String name, final Object[] payload)
 	{
 		if (Extension.callbackHandler == null) return;
 

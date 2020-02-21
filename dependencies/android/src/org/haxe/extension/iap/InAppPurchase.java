@@ -29,6 +29,7 @@ import org.haxe.extension.iap.util.BillingManager.BillingUpdatesListener;
 import org.json.JSONException;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.opengl.GLSurfaceView;
 
 public class InAppPurchase extends Extension {
 	
@@ -149,9 +150,10 @@ public class InAppPurchase extends Extension {
 
 	private static void fireCallback(final String name, final Object[] payload)
 	{
-		if (Extension.callbackHandler == null) return;
+		if (Extension.mainView == null) return;
+		GLSurfaceView view = (GLSurfaceView) Extension.mainView;
 
-		Extension.callbackHandler.post(new Runnable()
+		view.queueEvent(new Runnable()
 		{
 			public void run()
 			{

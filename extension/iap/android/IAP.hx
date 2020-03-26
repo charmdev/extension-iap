@@ -192,7 +192,7 @@ import openfl.utils.JNI;
 	public static function addEventListener (type:String, listener:Dynamic, useCapture:Bool = false, priority:Int = 0, useWeakReference:Bool = false):Void {
 
 		dispatcher.addEventListener (type, listener, useCapture, priority, useWeakReference);
-		cleanupJobs.push(dispatcher.removeEventListener.bind(type, listener, useCapture));
+		cleanupJobs.push(IAP.removeEventListener.bind(type, listener, useCapture));
 	}
 
 	public static function removeEventListener (type:String, listener:Dynamic, capture:Bool = false):Void {

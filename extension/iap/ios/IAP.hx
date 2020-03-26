@@ -59,6 +59,7 @@ import haxe.Json;
 
 	// Event dispatcher composition
 	private static var dispatcher = new EventDispatcher ();
+	private static var cleanupJobs:Array<Void -> Void> = [];
 
 
 	/**
@@ -97,6 +98,12 @@ import haxe.Json;
 
 			initialized = false;
 		}
+
+		for (job in cleanupJobs)
+		{
+			job();
+		}
+		cleanupJobs = [];
 	}
 
 	/**
@@ -319,7 +326,7 @@ import haxe.Json;
 	public static function addEventListener (type:String, listener:Dynamic, useCapture:Bool = false, priority:Int = 0, useWeakReference:Bool = false):Void {
 
 		dispatcher.addEventListener (type, listener, useCapture, priority, useWeakReference);
-
+		cleanupJobs.push(IAP.removeEventListener.bind(type, listener, useCapture));
 	}
 
 	public static function removeEventListener (type:String, listener:Dynamic, capture:Bool = false):Void {

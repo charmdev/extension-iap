@@ -1,9 +1,9 @@
 package extension.iap.android;
 
 import extension.iap.IAP;
+import extension.iap.EventDispatcher;
 import flash.errors.Error;
 import flash.events.Event;
-import flash.events.EventDispatcher;
 import flash.Lib;
 import haxe.Json;
 
@@ -60,7 +60,7 @@ import openfl.utils.JNI;
 
 	// Event dispatcher composition
 	private static var dispatcher = new EventDispatcher ();
-	private static var cleanupJobs:Array<Void -> Void> = [];
+	private static var iapHandler:IAPHandler = new IAPHandler();
 
 	/**
 	 * Initializes the extension.
@@ -77,30 +77,20 @@ import openfl.utils.JNI;
 
 	public static function initialize (publicKey:String = ""):Void {
 
-		if (initialized)
-		{
-			trace("IAP: already initialized - cleanup it");
-			return;
-		}
-
 		if (funcInit == null) {
 			funcInit = JNI.createStaticMethod ("org/haxe/extension/iap/InAppPurchase", "initialize", "(Ljava/lang/String;Lorg/haxe/lime/HaxeObject;)V");
 		}
 
 		inventory = new Inventory(null);
-		funcInit (publicKey, new IAPHandler ());
+		funcInit (publicKey, iapHandler);
 
 		initialized = true;
 	}
 
-	public static function cleanup ():Void {
-		inventory = null;		
-		for (job in cleanupJobs)
-		{
-			job();
-		}
-		cleanupJobs = [];
+	public static function cleanup():Void {
+		inventory = null;
 		initialized = false;
+		dispatcher.removeAllListeners();
 	}
 
 	/**
@@ -189,28 +179,20 @@ import openfl.utils.JNI;
 
 	// Event Dispatcher composition methods
 
-	public static function addEventListener (type:String, listener:Dynamic, useCapture:Bool = false, priority:Int = 0, useWeakReference:Bool = false):Void {
+	public static function addEventListener (type:String, listener:IAPEvent->Void, useCapture:Bool = false, priority:Int = 0, useWeakReference:Bool = false):Void {
 
-		dispatcher.addEventListener (type, listener, useCapture, priority, useWeakReference);
-		cleanupJobs.push(IAP.removeEventListener.bind(type, listener, useCapture));
+		dispatcher.setListener(type, listener);
 	}
 
-	public static function removeEventListener (type:String, listener:Dynamic, capture:Bool = false):Void {
+	public static function removeEventListener (type:String):Void {
 
-		dispatcher.removeEventListener (type, listener, capture);
-
-	}
-
-	public static function dispatchEvent (event:Event):Bool {
-		return dispatcher.dispatchEvent (event);
-	}
-
-	public static function hasEventListener (type:String):Bool {
-
-		return dispatcher.hasEventListener (type);
+		dispatcher.removeListener(type);
 
 	}
 
+	public static function dispatchEvent (event:IAPEvent):Void {
+		dispatcher.dispatchEvent (event);
+	}
 
 	// Native Methods
 	private static var funcInit:Dynamic;
@@ -238,7 +220,7 @@ private class IAPHandler {
 	///////////////////////////////////////////////////////////////////////////////////////////
 
 	public function onCanceledPurchase (message:String):Void {
-		IAP.dispatcher.dispatchEvent (new IAPEvent (IAPEvent.PURCHASE_CANCEL));
+		IAP.dispatchEvent (new IAPEvent (IAPEvent.PURCHASE_CANCEL));
 	}
 
 	///////////////////////////////////////////////////////////////////////////////////////////
@@ -284,7 +266,6 @@ private class IAPHandler {
 		evt.purchase = new Purchase(response, itemType, signature);
 		evt.productID = evt.purchase.productID;
 		IAP.inventory.purchaseMap.set(evt.purchase.productID, evt.purchase);
-
 		IAP.dispatchEvent (evt);
 	}
 

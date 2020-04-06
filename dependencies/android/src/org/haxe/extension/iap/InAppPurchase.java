@@ -175,7 +175,7 @@ public class InAppPurchase extends Extension {
 	
 	
 	public static void initialize (String publicKey, HaxeObject callback) {
-		
+		cleanup();
 		Log.i ("IAP", "Initializing billing service");
 		
 		InAppPurchase.updateListener = new UpdateListener();
@@ -188,6 +188,10 @@ public class InAppPurchase extends Extension {
 	
 	
 	@Override public void onDestroy () {
+		InAppPurchase.cleanup();
+	}
+
+	private static void cleanup() {
 		if (InAppPurchase.billingManager != null) {
 			InAppPurchase.billingManager.destroy();
 			InAppPurchase.billingManager = null;

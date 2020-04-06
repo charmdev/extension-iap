@@ -4,7 +4,7 @@ import cpp.Lib;
 import extension.iap.IAP;
 import flash.errors.Error;
 import flash.events.Event;
-import flash.events.EventDispatcher;
+import extension.iap.EventDispatcher;
 import haxe.Json;
 
 /**
@@ -59,8 +59,6 @@ import haxe.Json;
 
 	// Event dispatcher composition
 	private static var dispatcher = new EventDispatcher ();
-	private static var cleanupJobs:Array<Void -> Void> = [];
-
 
 	/**
 	 * Initializes the extension.
@@ -98,12 +96,7 @@ import haxe.Json;
 
 			initialized = false;
 		}
-
-		for (job in cleanupJobs)
-		{
-			job();
-		}
-		cleanupJobs = [];
+		dispatcher.removeAllListeners();
 	}
 
 	/**
@@ -323,29 +316,23 @@ import haxe.Json;
 
 	// Event Dispatcher composition methods
 
-	public static function addEventListener (type:String, listener:Dynamic, useCapture:Bool = false, priority:Int = 0, useWeakReference:Bool = false):Void {
+	public static function addEventListener (type:String, listener:Event->Void):Void {
 
-		dispatcher.addEventListener (type, listener, useCapture, priority, useWeakReference);
-		cleanupJobs.push(IAP.removeEventListener.bind(type, listener, useCapture));
+		dispatcher.setListener (type, listener);
 	}
 
-	public static function removeEventListener (type:String, listener:Dynamic, capture:Bool = false):Void {
+	public static function removeEventListener (type:String):Void {
 
-		dispatcher.removeEventListener (type, listener, capture);
-
-	}
-
-	public static function dispatchEvent (event:Event):Bool {
-
-		return dispatcher.dispatchEvent (event);
+		dispatcher.removeListener (type);
 
 	}
 
-	public static function hasEventListener (type:String):Bool {
+	public static function dispatchEvent (event:Event):Void {
 
-		return dispatcher.hasEventListener (type);
+		dispatcher.dispatchEvent (event);
 
 	}
+
 
 	// Native Methods
 

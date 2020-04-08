@@ -179,7 +179,7 @@ import openfl.utils.JNI;
 
 	// Event Dispatcher composition methods
 
-	public static function addEventListener (type:String, listener:IAPEvent->Void, useCapture:Bool = false, priority:Int = 0, useWeakReference:Bool = false):Void {
+	public static function addEventListener (type:String, listener:IAPEvent->Void):Void {
 
 		dispatcher.setListener(type, listener);
 	}

@@ -3,7 +3,6 @@ package extension.iap.ios;
 import cpp.Lib;
 import extension.iap.IAP;
 import flash.errors.Error;
-import flash.events.Event;
 import extension.iap.EventDispatcher;
 import haxe.Json;
 
@@ -316,21 +315,19 @@ import haxe.Json;
 
 	// Event Dispatcher composition methods
 
-	public static function addEventListener (type:String, listener:Event->Void):Void {
+	public static function addEventListener (type:String, listener:IAPEvent->Void):Void {
 
-		dispatcher.setListener (type, listener);
+		dispatcher.setListener(type, listener);
 	}
 
 	public static function removeEventListener (type:String):Void {
 
-		dispatcher.removeListener (type);
+		dispatcher.removeListener(type);
 
 	}
 
-	public static function dispatchEvent (event:Event):Void {
-
-		dispatcher.dispatchEvent (event);
-
+	public static function dispatchEvent (event:IAPEvent):Void {
+		dispatcher.dispatchEvent(event);
 	}
 
 

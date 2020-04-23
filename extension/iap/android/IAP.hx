@@ -56,7 +56,6 @@ import openfl.utils.JNI;
 	public static var manualTransactionMode (get, set):Bool;
 	public static var inventory(default, null):Inventory = null;
 	private static var initialized = false;
-	private static var tempProductsData:Array<IAProduct> = [];
 
 	// Event dispatcher composition
 	private static var dispatcher = new EventDispatcher ();
@@ -77,10 +76,6 @@ import openfl.utils.JNI;
 
 	public static function initialize (publicKey:String = ""):Void {
 
-		if (funcInit == null) {
-			funcInit = JNI.createStaticMethod ("org/haxe/extension/iap/InAppPurchase", "initialize", "(Ljava/lang/String;Lorg/haxe/lime/HaxeObject;)V");
-		}
-
 		inventory = new Inventory(null);
 		funcInit (publicKey, iapHandler);
 
@@ -91,6 +86,7 @@ import openfl.utils.JNI;
 		inventory = null;
 		initialized = false;
 		dispatcher.removeAllListeners();
+		funcCleanup();
 	}
 
 	/**
@@ -107,13 +103,8 @@ import openfl.utils.JNI;
 	 * 		PURCHASE_CANCEL: Fired when the purchase attempt was cancelled by the user
 	 */
 
-	public static function purchase (productID:String, devPayload:String = ""):Void {
-
-		if (funcBuy == null) {
-			funcBuy = JNI.createStaticMethod ("org/haxe/extension/iap/InAppPurchase", "buy", "(Ljava/lang/String;Ljava/lang/String;)V");
-		}
-
-		funcBuy (productID, devPayload);
+	public static function purchase(productID:String, devPayload:String = ""):Void {
+		funcBuy(productID, devPayload);
 	}
 
 
@@ -128,10 +119,7 @@ import openfl.utils.JNI;
 	 * 			This method also populates the productDetailsMap property of the inventory, so it can be accessed anytime after calling it.
 	 */
 	
-	public static function requestProductData (ids:Array<String>):Void {
-		if (funcQuerySkuDetails == null) {
-			funcQuerySkuDetails = JNI.createStaticMethod ("org/haxe/extension/iap/InAppPurchase", "querySkuDetails", "([Ljava/lang/String;)V");
-		}
+	public static function requestProductData(ids:Array<String>):Void {
 		funcQuerySkuDetails(ids);
 	}
 
@@ -145,13 +133,8 @@ import openfl.utils.JNI;
 	 * 		PURCHASE_CONSUME_FAILURE: Fired when the consume attempt failed
 	 */
 
-	public static function consume (purchase:Purchase):Void {
-
-		if (funcConsume == null) {
-			funcConsume = JNI.createStaticMethod ("org/haxe/extension/iap/InAppPurchase", "consume", "(Ljava/lang/String;Ljava/lang/String;)V");
-		}
-		funcConsume (purchase.originalJson, purchase.signature);
-
+	public static function consume(purchase:Purchase):Void {
+		funcConsume(purchase.originalJson, purchase.signature);
 	}
 
 	public static function queryInventory (queryItemDetails:Bool = false, moreItems:Array<String> = null):Void {}
@@ -195,14 +178,11 @@ import openfl.utils.JNI;
 	}
 
 	// Native Methods
-	private static var funcInit:Dynamic;
-	private static var funcBuy:Dynamic;
-	private static var funcConsume:Dynamic;
-	private static var funcRestore:Dynamic;
-	private static var funcQueryInventory:Dynamic;
-	private static var funcQuerySkuDetails:Dynamic;
-	private static var funcTest:Dynamic;
-
+	static var funcInit = JNI.createStaticMethod("org/haxe/extension/iap/InAppPurchase", "initialize", "(Ljava/lang/String;Lorg/haxe/lime/HaxeObject;)V");
+	static var funcBuy = JNI.createStaticMethod ("org/haxe/extension/iap/InAppPurchase", "buy", "(Ljava/lang/String;Ljava/lang/String;)V");
+	static var funcQuerySkuDetails = JNI.createStaticMethod ("org/haxe/extension/iap/InAppPurchase", "querySkuDetails", "([Ljava/lang/String;)V");
+	static var funcConsume = JNI.createStaticMethod ("org/haxe/extension/iap/InAppPurchase", "consume", "(Ljava/lang/String;Ljava/lang/String;)V");
+	static var funcCleanup = JNI.createStaticMethod("org/haxe/extension/iap/InAppPurchase", "cleanup", "()V");
 }
 
 

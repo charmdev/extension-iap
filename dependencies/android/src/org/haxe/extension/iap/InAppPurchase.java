@@ -136,16 +136,22 @@ public class InAppPurchase extends Extension {
 	
 	public static void consume (final String purchaseJson, final String signature) 
 	{
-		try
+		Extension.mainActivity.runOnUiThread(new Runnable() 
 		{
-			final Purchase purchase = new Purchase(purchaseJson, signature);
-			InAppPurchase.consumeInProgress.put(purchase.getPurchaseToken(), purchase);
-			InAppPurchase.billingManager.consumeAsync(purchase.getPurchaseToken());
-		}
-		catch(JSONException e)
-		{
-			fireCallback("onFailedConsume", new Object[] {});
-		}
+			public void run()
+			{
+				try
+				{
+					final Purchase purchase = new Purchase(purchaseJson, signature);
+					InAppPurchase.consumeInProgress.put(purchase.getPurchaseToken(), purchase);
+					InAppPurchase.billingManager.consumeAsync(purchase.getPurchaseToken());
+				}
+				catch(JSONException e)
+				{
+					fireCallback("onFailedConsume", new Object[] {});
+				}
+			}
+		});
 	}
 
 	private static void fireCallback(final String name, final Object[] payload)
@@ -165,39 +171,59 @@ public class InAppPurchase extends Extension {
 		});
 	}
 
-	public static void querySkuDetails(String[] ids) {
-		InAppPurchase.billingManager.querySkuDetailsAsync(SkuType.INAPP, Arrays.asList(ids));
+	public static void querySkuDetails(final String[] ids) {
+		Extension.mainActivity.runOnUiThread(new Runnable() 
+		{
+			public void run()
+			{
+				InAppPurchase.billingManager.querySkuDetailsAsync(SkuType.INAPP, Arrays.asList(ids));
+			}
+		});
 	}
 	
 	public static String getPublicKey () {
 		return publicKey;
 	}
 	
-	
-	public static void initialize (String publicKey, HaxeObject callback) {
-		cleanup();
-		Log.i ("IAP", "Initializing billing service");
-		
-		InAppPurchase.updateListener = new UpdateListener();
-		InAppPurchase.publicKey = publicKey;
-		InAppPurchase.callback = callback;
-		
-		BillingManager.BASE_64_ENCODED_PUBLIC_KEY = publicKey;
-		InAppPurchase.billingManager = new BillingManager(Extension.mainActivity, InAppPurchase.updateListener);
+	public static void initialize (final String publicKey,final HaxeObject callback) {
+		Extension.mainActivity.runOnUiThread(new Runnable() 
+		{
+			public void run()
+			{
+				Log.i ("IAP", "Initializing billing service");
+				
+				InAppPurchase.updateListener = new UpdateListener();
+				InAppPurchase.publicKey = publicKey;
+				InAppPurchase.callback = callback;
+				
+				BillingManager.BASE_64_ENCODED_PUBLIC_KEY = publicKey;
+				InAppPurchase.billingManager = new BillingManager(Extension.mainActivity, InAppPurchase.updateListener);
+			}
+		});
 	}
 	
 	
 	@Override public void onDestroy () {
-		InAppPurchase.cleanup();
-	}
-
-	private static void cleanup() {
-		if (InAppPurchase.billingManager != null) {
+		if (InAppPurchase.billingManager != null) 
+		{
 			InAppPurchase.billingManager.destroy();
 			InAppPurchase.billingManager = null;
 		}
 	}
-	
+
+	public static void cleanup() {
+		Extension.mainActivity.runOnUiThread(new Runnable() 
+		{
+			public void run()
+			{
+				if (InAppPurchase.billingManager != null) 
+				{
+					InAppPurchase.billingManager.destroy();
+					InAppPurchase.billingManager = null;
+				}
+			}
+		});
+	}
 	
 	public static void setPublicKey (String s) {
 		publicKey = s;

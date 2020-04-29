@@ -12,7 +12,6 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
-import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
@@ -53,7 +52,7 @@ public class InAppPurchase extends Extension {
 
 		@Override
 		public void onConsumeFinished(String token, final @BillingResponse int result) {
-			Log.d(TAG, "Consumption finished. Purchase token: " + token + ", result: " + result);
+			Log.d("Consumption finished. result: " + result);
 			final Purchase purchase = InAppPurchase.consumeInProgress.get(token);
 			InAppPurchase.consumeInProgress.remove(token);
 			if (result == BillingResponse.OK) {
@@ -65,7 +64,7 @@ public class InAppPurchase extends Extension {
 
 		@Override
 		public void onPurchasesUpdated(List<Purchase> purchaseList, final @BillingResponse int result) {
-			Log.d(TAG, "onPurchasesUpdated: " + result);
+			Log.d("onPurchasesUpdated: " + result);
 			if (result == BillingResponse.OK)
 			{
 				for (Purchase purchase : purchaseList) 
@@ -83,7 +82,7 @@ public class InAppPurchase extends Extension {
 				else
 				{
 					String message = "{\"result\":{\"message\":\"" + result + "\"}}";
-					Log.d(TAG, "onFailedPurchase: " + message);
+					Log.d("onFailedPurchase: " + message);
 					fireCallback("onFailedPurchase", new Object[] { (message) });
 				}
 			}
@@ -91,7 +90,7 @@ public class InAppPurchase extends Extension {
 
 		@Override
 		public void onQuerySkuDetailsFinished(List<SkuDetails> skuList, final @BillingResponse int result) {
-			Log.d(TAG, "onQuerySkuDetailsFinished: result: " + result);
+			Log.d("onQuerySkuDetailsFinished: result: " + result);
 			if (result == BillingResponse.OK) {
 				String jsonResp =  "{ \"products\":[ ";
 				for (SkuDetails sku : skuList) {
@@ -99,7 +98,6 @@ public class InAppPurchase extends Extension {
 				}
 				jsonResp = jsonResp.substring(0, jsonResp.length() - 1);
 				jsonResp += "]}";
-				Log.d(TAG, "onQuerySkuDetailsFinished: " + jsonResp + ", result: " + result);
 				fireCallback("onRequestProductDataComplete", new Object[] { jsonResp });
 			}
 			else {
@@ -185,12 +183,14 @@ public class InAppPurchase extends Extension {
 		return publicKey;
 	}
 	
-	public static void initialize (final String publicKey,final HaxeObject callback) {
+	public static void initialize (final String publicKey, final HaxeObject callback) {
+		Log.initialize(callback);
+
 		Extension.mainActivity.runOnUiThread(new Runnable() 
 		{
 			public void run()
 			{
-				Log.i ("IAP", "Initializing billing service");
+				Log.i ("Initializing billing service");
 				
 				InAppPurchase.updateListener = new UpdateListener();
 				InAppPurchase.publicKey = publicKey;

@@ -46,7 +46,9 @@ public class BillingManager implements PurchasesUpdatedListener {
     // Default value of mBillingClientResponseCode until BillingManager was not yeat initialized
     public static final int BILLING_MANAGER_NOT_INITIALIZED  = -1;
 
+
     private static final String TAG = "BillingManager hx:";
+    private static final int MAX_RETRIES = 10;
 
     /** A reference to BillingClient **/
     private BillingClient mBillingClient;
@@ -64,6 +66,11 @@ public class BillingManager implements PurchasesUpdatedListener {
 
     private Set<String> mTokensToBeConsumed;
 
+    private BillingClientStateListener stateListener;
+    private SkuDetailsResponseListener skuResponseListener;
+    private int mReconnectAttempts = 0;
+    private int mSkuRequestAttemts = 0;
+    private int mSimulateFailuresUntilAttempt = 0;
     private int mBillingClientResponseCode = BILLING_MANAGER_NOT_INITIALIZED;
 
     /* BASE_64_ENCODED_PUBLIC_KEY should be YOUR APPLICATION'S PUBLIC KEY
@@ -179,29 +186,46 @@ public class BillingManager implements PurchasesUpdatedListener {
     public void querySkuDetailsAsync(@SkuType final String itemType, final List<String> skuList) {
         // Creating a runnable from the request to use it inside our connection retry policy below
         Log.d("Quering skuDetails");
-        Runnable queryRequest = new Runnable() {
+
+        final Runnable queryRequest = new Runnable() {
             @Override
             public void run() {
                 // Query the purchase async
                 SkuDetailsParams.Builder params = SkuDetailsParams.newBuilder();
                 params.setSkusList(skuList).setType(itemType);
-                mBillingClient.querySkuDetailsAsync(params.build(),
-                        new SkuDetailsResponseListener() {
-                            @Override
-                            public void onSkuDetailsResponse(int responseCode,
-                                                             List<SkuDetails> skuDetailsList) {
-                                Log.d("onSkuDetailsResponse code: " + responseCode);
-                                mBillingUpdatesListener.onQuerySkuDetailsFinished(skuDetailsList, responseCode);
-                            }
-                        });
+                mBillingClient.querySkuDetailsAsync(params.build(), skuResponseListener);
             }
         };
 
-        Runnable onError = new Runnable() {
+        final Runnable onError = new Runnable() {
             @Override
             public void run() {
                 Log.d("onSkuDetailsResponse onError: " + mBillingClientResponseCode);
                 mBillingUpdatesListener.onQuerySkuDetailsFinished(null, mBillingClientResponseCode);
+            }
+        };
+
+        mSkuRequestAttemts = 0;
+        skuResponseListener = new SkuDetailsResponseListener() {
+            @Override
+            public void onSkuDetailsResponse(int responseCode,
+                                                List<SkuDetails> skuDetailsList) {
+                if (mSkuRequestAttemts < mSimulateFailuresUntilAttempt)
+                {
+                    responseCode = 6;
+                }
+
+                Log.d("onSkuDetailsResponse code: " + responseCode);
+                if ((responseCode != BillingResponse.OK) && (mSkuRequestAttemts < MAX_RETRIES))
+                {
+                    Log.d("retry:" + mSkuRequestAttemts);
+                    mSkuRequestAttemts++;
+                    executeServiceRequest(queryRequest, onError);
+                }
+                else
+                {
+                    mBillingUpdatesListener.onQuerySkuDetailsFinished(skuDetailsList, responseCode);
+                }
             }
         };
 
@@ -289,7 +313,7 @@ public class BillingManager implements PurchasesUpdatedListener {
             }
             else
             {
-                Log.w("onQueryPurchasesFinished result code (" + result.getResponseCode() + ") was bad - quitting");
+                Log.w("onQueryPurchases code: " + result.getResponseCode());
             }
             
             mBillingUpdatesListener.onBillingClientSetupFinished(false);
@@ -365,9 +389,16 @@ public class BillingManager implements PurchasesUpdatedListener {
     }
 
     public void startServiceConnection(final Runnable executeOnSuccess, final Runnable executeOnError) {
-        mBillingClient.startConnection(new BillingClientStateListener() {
+        mReconnectAttempts = 0;
+
+        stateListener = new BillingClientStateListener() {
             @Override
             public void onBillingSetupFinished(@BillingResponse int billingResponseCode) {
+                if (mReconnectAttempts < mSimulateFailuresUntilAttempt)
+                {
+                    billingResponseCode = 6;
+                }
+
                 Log.d("Setup finished. Response code: " + billingResponseCode);
                 mBillingClientResponseCode = billingResponseCode;
 
@@ -379,7 +410,13 @@ public class BillingManager implements PurchasesUpdatedListener {
                 }
                 else {
                     if (executeOnError != null) {
-                        executeOnError.run();
+                        if (mReconnectAttempts >= MAX_RETRIES) {
+                            executeOnError.run();
+                        }
+                        else {
+                            mReconnectAttempts++;
+                            mBillingClient.startConnection(stateListener);
+                        }
                     }
                     mIsServiceConnected = false;
                 }
@@ -390,15 +427,15 @@ public class BillingManager implements PurchasesUpdatedListener {
                 Log.d("OnBillingServiceDisconnected");
                 mIsServiceConnected = false;
             }
-        });
+        };
+
+        mBillingClient.startConnection(stateListener);
     }
 
-    private void executeServiceRequest(Runnable runnable, Runnable onError) {
+    private void executeServiceRequest(final Runnable runnable, final Runnable onError) {
         if (mIsServiceConnected) {
             runnable.run();
         } else {
-            // If billing service was disconnected, we try to reconnect 1 time.
-            // (feel free to introduce your retry policy here).
             startServiceConnection(runnable, onError);
         }
     }

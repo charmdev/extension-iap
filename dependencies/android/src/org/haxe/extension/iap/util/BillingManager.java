@@ -110,9 +110,6 @@ public class BillingManager implements PurchasesUpdatedListener {
         mActivity = activity;
         mBillingUpdatesListener = updatesListener;
         mBillingClient = BillingClient.newBuilder(mActivity).setListener(this).build();
-
-        Log.d("Starting setup.");
-        queryPurchases();
     }
 
     /**
@@ -345,6 +342,7 @@ public class BillingManager implements PurchasesUpdatedListener {
      * a listener
      */
     public void queryPurchases() {
+        Log.d("Starting setup.");
         Runnable queryToExecute = new Runnable() {
             @Override
             public void run() {

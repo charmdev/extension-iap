@@ -185,19 +185,27 @@ public class InAppPurchase extends Extension {
 	
 	public static void initialize (final String publicKey, final HaxeObject callback) {
 		Log.initialize(callback);
+		
+		InAppPurchase.publicKey = publicKey;
+		InAppPurchase.callback = callback;
 
+		setupBillingManager();
+	}
+
+	private static void setupBillingManager()
+	{
 		Extension.mainActivity.runOnUiThread(new Runnable() 
 		{
 			public void run()
 			{
 				Log.i ("Initializing billing service");
-				
-				InAppPurchase.updateListener = new UpdateListener();
-				InAppPurchase.publicKey = publicKey;
-				InAppPurchase.callback = callback;
-				
-				BillingManager.BASE_64_ENCODED_PUBLIC_KEY = publicKey;
-				InAppPurchase.billingManager = new BillingManager(Extension.mainActivity, InAppPurchase.updateListener);
+				if (InAppPurchase.billingManager == null)
+				{
+					InAppPurchase.updateListener = new UpdateListener();
+					BillingManager.BASE_64_ENCODED_PUBLIC_KEY = InAppPurchase.publicKey;
+					InAppPurchase.billingManager = new BillingManager(Extension.mainActivity, InAppPurchase.updateListener);
+				}
+				InAppPurchase.billingManager.queryPurchases();
 			}
 		});
 	}
@@ -211,19 +219,7 @@ public class InAppPurchase extends Extension {
 		}
 	}
 
-	public static void cleanup() {
-		Extension.mainActivity.runOnUiThread(new Runnable() 
-		{
-			public void run()
-			{
-				if (InAppPurchase.billingManager != null) 
-				{
-					InAppPurchase.billingManager.destroy();
-					InAppPurchase.billingManager = null;
-				}
-			}
-		});
-	}
+	public static void cleanup() {}
 	
 	public static void setPublicKey (String s) {
 		publicKey = s;

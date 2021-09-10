@@ -194,12 +194,6 @@ import lime.system.JNI;
 	public static function dispatchEvent (event:Event):Void {
 		dispatcher.dispatchEvent (event);
 	}
-
-	public static function hasEventListener (type:String):Bool {
-
-		return dispatcher.hasEventListener (type);
-
-	}
 	
 
 	// Native Methods

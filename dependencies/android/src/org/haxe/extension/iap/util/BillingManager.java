@@ -416,7 +416,7 @@ public class BillingManager implements PurchasesUpdatedListener {
 				PurchasesResult purchasesResult = null;
 				if (mBillingClient != null)
 				{
-					PurchasesResult purchasesResult = mBillingClient.queryPurchases(SkuType.INAPP);
+					purchasesResult = mBillingClient.queryPurchases(SkuType.INAPP);
 					Log.i("purchasesResult:" + purchasesResult);
 				}
                 

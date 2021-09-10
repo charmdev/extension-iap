@@ -191,7 +191,7 @@ import lime.system.JNI;
 
 	}
 
-	public static function dispatchEvent (event:Event):Void {
+	public static function dispatchEvent (event:IAPEvent):Void {
 		dispatcher.dispatchEvent (event);
 	}
 	

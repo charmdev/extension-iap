@@ -7,7 +7,11 @@ import flash.events.Event;
 import flash.Lib;
 import haxe.Json;
 
+#if (openfl < "4.0.0")
 import openfl.utils.JNI;
+#else
+import lime.system.JNI;
+#end
 
 /**
  * Provides convenience methods and properties for in-app purchases (Android & iOS).
@@ -136,6 +140,20 @@ import openfl.utils.JNI;
 	public static function consume(purchase:Purchase):Void {
 		funcConsume(purchase.originalJson, purchase.signature);
 	}
+	
+	/**
+	 * Sends a acknowledgePurchase intent for a given product.
+	 *
+	 * @param purchase. The previously purchased product.
+	 *
+	 * Related Events (IAPEvent):
+	 * 		PURCHASE_ACKNOWLEDGE_SUCCESS: Fired when the acknowledgePurchase attempt was successful
+	 * 		PURCHASE_ACKNOWLEDGE_FAILURE: Fired when the acknowledgePurchase attempt failed
+	 */
+
+	public static function acknowledgePurchase (purchase:Purchase):Void {
+		funcAcknowledgePurchase (purchase.originalJson, purchase.signature);
+	}
 
 	public static function queryInventory (queryItemDetails:Bool = false, moreItems:Array<String> = null):Void {}
 
@@ -173,15 +191,23 @@ import openfl.utils.JNI;
 
 	}
 
-	public static function dispatchEvent (event:IAPEvent):Void {
+	public static function dispatchEvent (event:Event):Void {
 		dispatcher.dispatchEvent (event);
 	}
+
+	public static function hasEventListener (type:String):Bool {
+
+		return dispatcher.hasEventListener (type);
+
+	}
+	
 
 	// Native Methods
 	static var funcInit = JNI.createStaticMethod("org/haxe/extension/iap/InAppPurchase", "initialize", "(Ljava/lang/String;Lorg/haxe/lime/HaxeObject;)V");
 	static var funcBuy = JNI.createStaticMethod ("org/haxe/extension/iap/InAppPurchase", "buy", "(Ljava/lang/String;Ljava/lang/String;)V");
 	static var funcQuerySkuDetails = JNI.createStaticMethod ("org/haxe/extension/iap/InAppPurchase", "querySkuDetails", "([Ljava/lang/String;)V");
 	static var funcConsume = JNI.createStaticMethod ("org/haxe/extension/iap/InAppPurchase", "consume", "(Ljava/lang/String;Ljava/lang/String;)V");
+	static var funcAcknowledgePurchase = JNI.createStaticMethod ("org/haxe/extension/iap/InAppPurchase", "acknowledgePurchase", "(Ljava/lang/String;Ljava/lang/String;)V");
 	static var funcCleanup = JNI.createStaticMethod("org/haxe/extension/iap/InAppPurchase", "cleanup", "()V");
 }
 
@@ -222,6 +248,29 @@ private class IAPHandler {
 
 		var dynResp:Dynamic = Json.parse(response);
 		var evt:IAPEvent = new IAPEvent (IAPEvent.PURCHASE_CONSUME_SUCCESS);
+		evt.productID = Reflect.field(dynResp, "productId");		
+		IAP.dispatchEvent(evt);
+	}
+	
+	///////////////////////////////////////////////////////////////////////////////////////////
+	///////////////////////////////////////////////////////////////////////////////////////////
+
+	public function onFailedAcknowledgePurchase (response:String):Void {
+		var dynResp:Dynamic = Json.parse(response);
+		var evt:IAPEvent = new IAPEvent (IAPEvent.PURCHASE_ACKNOWLEDGE_FAILURE);
+		evt.productID = Reflect.field(Reflect.field(dynResp, "product"), "productId");
+		evt.message = Reflect.field(Reflect.field(dynResp, "result"), "message");
+		IAP.dispatchEvent (evt);
+	}
+
+	///////////////////////////////////////////////////////////////////////////////////////////
+	///////////////////////////////////////////////////////////////////////////////////////////
+
+	public function onAcknowledgePurchase (response:String):Void {
+		trace('onAcknowledgePurchase: $response');
+
+		var dynResp:Dynamic = Json.parse(response);
+		var evt:IAPEvent = new IAPEvent (IAPEvent.PURCHASE_ACKNOWLEDGE_SUCCESS);
 		evt.productID = Reflect.field(dynResp, "productId");		
 		IAP.dispatchEvent(evt);
 	}

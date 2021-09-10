@@ -20,7 +20,7 @@ void sendPurchaseEventWrap(const char* type, NSString* data)
 void sendPurchaseFinishEventWrap(const char* type, NSString* productID, NSString* transactionID, double transactionDate, NSString* receipt)
 {
 	dispatch_async(dispatch_get_main_queue(), ^{
-		
+
   		sendPurchaseFinishEvent(type, [productID UTF8String], [transactionID UTF8String], transactionDate, [receipt UTF8String]);
 	});
 }
@@ -115,7 +115,7 @@ void sendPurchaseProductDataEventWrap(const char* type, NSString* productID, NSS
 
 - (SKProduct*)findProduct:(NSString*)productIdentifier
 {
-	for (SKProduct *prod in products)	
+	for (SKProduct *prod in products)
 	{
 		if ([prod.productIdentifier isEqualToString:productIdentifier])
 		{
@@ -160,22 +160,22 @@ void sendPurchaseProductDataEventWrap(const char* type, NSString* productID, NSS
 			[numberFormatter setLocale:prod.priceLocale];
 			NSString *formattedPrice = [numberFormatter stringFromNumber:prod.price];
 			[numberFormatter release];
-			
+
 			NSString *priceCurrencyCode = [prod.priceLocale objectForKey:NSLocaleCurrencyCode];
 
-			int priceAmountMicros = [[prod.price decimalNumberByMultiplyingBy:[NSDecimalNumber decimalNumberWithString:@"1000000"]] intValue];			
-			
+			int priceAmountMicros = [[prod.price decimalNumberByMultiplyingBy:[NSDecimalNumber decimalNumberWithString:@"100"]] intValue];
+
 			sendPurchaseProductDataEventWrap("productData", prod.productIdentifier, prod.localizedTitle, prod.localizedDescription, priceAmountMicros, formattedPrice, priceCurrencyCode);
 
 		}
-		
+
 		static dispatch_once_t onceToken;
 		dispatch_once(&onceToken, ^{
 			[[SKPaymentQueue defaultQueue] addTransactionObserver:self];
 		});
 		[self updateAllTransactionsManually];
 		inited = true;
-		
+
 		sendPurchaseEventWrap("productDataComplete", @"");
 	} 
     
@@ -218,7 +218,7 @@ void sendPurchaseProductDataEventWrap(const char* type, NSString* productID, NSS
         NSURL *receiptURL = [[NSBundle mainBundle] appStoreReceiptURL];
         NSData *receipt = [NSData dataWithContentsOfURL:receiptURL];
         NSString *jsonObjectString = [receipt base64EncodedStringWithOptions:0];
-	    
+
 	sendPurchaseFinishEventWrap("success", transaction.payment.productIdentifier, transaction.transactionIdentifier, [transaction.transactionDate timeIntervalSince1970], jsonObjectString);
     }
     
@@ -230,7 +230,8 @@ void sendPurchaseProductDataEventWrap(const char* type, NSString* productID, NSS
         {
             NSLog(@"Transaction error: %@", transaction.error.localizedDescription);
         }
-        sendPurchaseEventWrap("failed", transaction.payment.productIdentifier);
+        /* Pass error message instead of transaction.payment.productIdentifier */
+        sendPurchaseEventWrap("failed", transaction.error.localizedDescription);
     }
 }
 
@@ -261,7 +262,7 @@ void sendPurchaseProductDataEventWrap(const char* type, NSString* productID, NSS
     if(transaction.error.code != SKErrorPaymentCancelled)
     {
         [self finishTransaction:transaction wasSuccessful:NO];
-    }    
+    }
     else
     {
     	NSLog(@"Canceled Purchase");
@@ -280,17 +281,17 @@ void sendPurchaseProductDataEventWrap(const char* type, NSString* productID, NSS
         switch(transaction.transactionState)
         {
             case SKPaymentTransactionStatePurchased:
-		NSLog(@"SKPaymentTransactionStatePurchased"); 
+		NSLog(@"SKPaymentTransactionStatePurchased");
                 [self completeTransaction:transaction];
 		break;
 
             case SKPaymentTransactionStateRestored:
-		NSLog(@"SKPaymentTransactionStateRestored"); 
+		NSLog(@"SKPaymentTransactionStateRestored");
                 [self completeTransaction:transaction];
                 break;
                 
             case SKPaymentTransactionStateFailed:
-		NSLog(@"SKPaymentTransactionStateFailed"); 
+		NSLog(@"SKPaymentTransactionStateFailed");
                 [self failedTransaction:transaction];
                 break;
                 
@@ -360,7 +361,7 @@ void sendPurchaseProductDataEventWrap(const char* type, NSString* productID, NSS
     
 	if(productsRequest)
        [productsRequest release];
-    
+
 	[super dealloc];
 }
 

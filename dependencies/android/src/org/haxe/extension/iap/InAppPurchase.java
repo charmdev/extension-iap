@@ -1,34 +1,25 @@
 package org.haxe.extension.iap;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-
-import android.app.Activity;
-import android.content.Context;
-import android.content.Intent;
-import android.os.Bundle;
-import android.os.Handler;
-import android.os.Message;
-import android.view.View;
-import android.view.View.OnClickListener;
-import android.widget.Button;
-import android.widget.ImageView;
-import org.haxe.extension.iap.util.*;
-import org.haxe.extension.Extension;
-import org.haxe.lime.HaxeObject;
-import com.android.billingclient.api.BillingClient.BillingResponse;
-import com.android.billingclient.api.BillingClient.SkuType;
-import com.android.billingclient.api.Purchase;
-import com.android.billingclient.api.SkuDetails;
-import org.haxe.extension.iap.util.BillingManager.BillingUpdatesListener;
-
-import org.json.JSONException;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.opengl.GLSurfaceView;
+
+import com.android.billingclient.api.BillingClient.BillingResponseCode;
+import com.android.billingclient.api.BillingClient.SkuType;
+import com.android.billingclient.api.BillingResult;
+import com.android.billingclient.api.Purchase;
+import com.android.billingclient.api.Purchase.PurchaseState;
+import com.android.billingclient.api.SkuDetails;
+
+import org.haxe.extension.Extension;
+import org.haxe.extension.iap.util.BillingManager;
+import org.haxe.extension.iap.util.BillingManager.BillingUpdatesListener;
+import org.haxe.extension.iap.util.Log;
+import org.haxe.lime.HaxeObject;
+import org.json.JSONException;
+
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class InAppPurchase extends Extension {
 	
@@ -38,6 +29,7 @@ public class InAppPurchase extends Extension {
 	private static String publicKey = "";
 	private static UpdateListener updateListener = null;
 	private static Map<String, Purchase> consumeInProgress = new HashMap<String, Purchase>();
+	private static Map<String, Purchase> acknowledgePurchaseInProgress = new HashMap<String, Purchase>();
 
 	private static class UpdateListener implements BillingUpdatesListener {
 		@Override
@@ -51,11 +43,11 @@ public class InAppPurchase extends Extension {
 		}
 
 		@Override
-		public void onConsumeFinished(String token, final @BillingResponse int result) {
-			Log.d("Consumption finished. result: " + result);
+		public void onConsumeFinished(String token, final BillingResult result) {
+			Log.d("Consumption finished. Purchase token: " + token + ", result: " + result);
 			final Purchase purchase = InAppPurchase.consumeInProgress.get(token);
 			InAppPurchase.consumeInProgress.remove(token);
-			if (result == BillingResponse.OK) {
+			if (result.getResponseCode() == BillingResponseCode.OK) {
 				fireCallback("onConsume", new Object[] { purchase.getOriginalJson() });
 			} else {
 				fireCallback("onFailedConsume", new Object[] { ("{\"result\":" + result + ", \"product\":" + purchase.getOriginalJson() + "}") });
@@ -63,19 +55,33 @@ public class InAppPurchase extends Extension {
 		}
 
 		@Override
-		public void onPurchasesUpdated(List<Purchase> purchaseList, final @BillingResponse int result) {
+		public void onAcknowledgePurchaseFinished(String token, final BillingResult result) {
+			Log.d("Consumption finished. Purchase token: " + token + ", result: " + result);
+			final Purchase purchase = InAppPurchase.acknowledgePurchaseInProgress.get(token);
+			InAppPurchase.acknowledgePurchaseInProgress.remove(token);
+			if (result.getResponseCode() == BillingResponseCode.OK) {
+				fireCallback("onAcknowledgePurchase", new Object[] { purchase.getOriginalJson() });
+			} else {
+				fireCallback("onFailedAcknowledgePurchase", new Object[] { ("{\"result\":" + result + ", \"product\":" + purchase.getOriginalJson() + "}") });
+			}
+		}
+
+		@Override
+		public void onPurchasesUpdated(List<Purchase> purchaseList, final BillingResult result) {
 			Log.d("onPurchasesUpdated: " + result);
-			if (result == BillingResponse.OK)
+			if (result.getResponseCode() == BillingResponseCode.OK)
 			{
 				for (Purchase purchase : purchaseList) 
 				{
-					String sku = purchase.getSku();
-					fireCallback("onPurchase", new Object[] { purchase.getOriginalJson(), "", purchase.getSignature() });
+					if(purchase.getPurchaseState() == PurchaseState.PURCHASED) {
+						//String sku = purchase.getSku();
+						fireCallback("onPurchase", new Object[]{purchase.getOriginalJson(), "", purchase.getSignature()});
+					}
 				}
 			}
 			else
 			{
-				if (result ==  BillingResponse.USER_CANCELED) 
+				if (result.getResponseCode() ==  BillingResponseCode.USER_CANCELED)
 				{
 					fireCallback("onCanceledPurchase", new Object[] { "canceled" });
 				}
@@ -89,15 +95,16 @@ public class InAppPurchase extends Extension {
 		}
 
 		@Override
-		public void onQuerySkuDetailsFinished(List<SkuDetails> skuList, final @BillingResponse int result) {
-			Log.d("onQuerySkuDetailsFinished: result: " + result);
-			if (result == BillingResponse.OK) {
+		public void onQuerySkuDetailsFinished(List<SkuDetails> skuList, final BillingResult result) {
+			Log.d("onQuerySkuDetailsFinished: result: " + result.getDebugMessage());
+			if (result.getResponseCode() == BillingResponseCode.OK) {
 				String jsonResp =  "{ \"products\":[ ";
 				for (SkuDetails sku : skuList) {
 						jsonResp += sku.getOriginalJson() + ",";
 				}
 				jsonResp = jsonResp.substring(0, jsonResp.length() - 1);
 				jsonResp += "]}";
+				Log.d("onQuerySkuDetailsFinished: " + jsonResp + ", result: " + result.getDebugMessage());
 				fireCallback("onRequestProductDataComplete", new Object[] { jsonResp });
 			}
 			else {
@@ -109,11 +116,15 @@ public class InAppPurchase extends Extension {
 		public void onQueryPurchasesFinished(List<Purchase> purchaseList) {
 			String jsonResp =  "{ \"purchases\":[ ";
 			for (Purchase purchase : purchaseList) {
-					jsonResp += "{" +
-					"\"key\":\"" + purchase.getSku() + "\", " + 
-					"\"value\":" + purchase.getOriginalJson() + "," + 
-					"\"itemType\":\"\"," + 
-					"\"signature\":\"" + purchase.getSignature() + "\"},";
+				if(purchase.getPurchaseState() == PurchaseState.PURCHASED) {
+					for(String sku : purchase.getSkus()){
+						jsonResp += "{" +
+								"\"key\":\"" + sku +"\", " +
+								"\"value\":" + purchase.getOriginalJson() + "," +
+								"\"itemType\":\"\"," +
+								"\"signature\":\"" + purchase.getSignature() + "\"},";
+					}
+				}
 			}
 			jsonResp = jsonResp.substring(0, jsonResp.length() - 1);
 			jsonResp += "]}";
@@ -125,6 +136,7 @@ public class InAppPurchase extends Extension {
 		// IabHelper.launchPurchaseFlow() must be called from the main activity's UI thread
 		Extension.mainActivity.runOnUiThread(new Runnable() 
 		{
+			@Override
 			public void run() 
 			{
 				InAppPurchase.billingManager.initiatePurchaseFlow(productID);
@@ -151,22 +163,55 @@ public class InAppPurchase extends Extension {
 			}
 		});
 	}
-
-	private static void fireCallback(final String name, final Object[] payload)
+	
+	public static void acknowledgePurchase (final String purchaseJson, final String signature)
 	{
-		if (Extension.mainView == null) return;
-		GLSurfaceView view = (GLSurfaceView) Extension.mainView;
-
-		view.queueEvent(new Runnable()
+		Extension.mainActivity.runOnUiThread(new Runnable() 
 		{
 			public void run()
 			{
-				if (InAppPurchase.callback != null)
+				try
 				{
-					InAppPurchase.callback.call(name, payload);
+					final Purchase purchase = new Purchase(purchaseJson, signature);
+					if (!purchase.isAcknowledged()) {
+						InAppPurchase.acknowledgePurchaseInProgress.put(purchase.getPurchaseToken(), purchase);
+						InAppPurchase.billingManager.acknowledgePurchase(purchase.getPurchaseToken());
+					}
+				}
+				catch(JSONException e)
+				{
+					fireCallback("onFailedAcknowledgePurchase", new Object[] {});
 				}
 			}
 		});
+	}
+
+	private static void fireCallback(final String name, final Object[] payload)
+	{
+		if (Extension.mainView == null || InAppPurchase.callback == null) return;
+
+		if (Extension.mainView instanceof GLSurfaceView)
+		{
+			GLSurfaceView view = (GLSurfaceView) Extension.mainView;
+			view.queueEvent(new Runnable()
+			{
+				public void run()
+				{
+					InAppPurchase.callback.call(name, payload);
+				}
+			});
+		}
+		else
+		{
+			Extension.mainActivity.runOnUiThread(new Runnable()
+			{
+				@Override
+				public void run()
+				{
+					InAppPurchase.callback.call(name, payload);
+				}
+			});
+		}
 	}
 
 	public static void querySkuDetails(final String[] ids) {
@@ -184,7 +229,7 @@ public class InAppPurchase extends Extension {
 	}
 	
 	public static void initialize (final String publicKey, final HaxeObject callback) {
-		Log.initialize(callback);
+		Log.i ("Initializing billing service");
 		
 		InAppPurchase.publicKey = publicKey;
 		InAppPurchase.callback = callback;

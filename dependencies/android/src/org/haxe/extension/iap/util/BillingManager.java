@@ -369,8 +369,8 @@ public class BillingManager implements PurchasesUpdatedListener {
      */
     private void onQueryPurchasesFinished(PurchasesResult result) {
         // Have we been disposed of in the meantime? If so, or bad result code, then quit
-        if (mBillingClient == null || result.getResponseCode() != BillingResponseCode.OK) {
-            if (mBillingClient == null)
+        if (mBillingClient == null || result == null || result.getResponseCode() != BillingResponseCode.OK) {
+            if (mBillingClient == null || result == null)
             {
                 Log.w("Billing client was null");
             }
@@ -412,10 +412,14 @@ public class BillingManager implements PurchasesUpdatedListener {
             @Override
             public void run() {
                 long time = System.currentTimeMillis();
-                PurchasesResult purchasesResult = mBillingClient.queryPurchases(SkuType.INAPP);
-                Log.i("Querying purchases elapsed time: " + (System.currentTimeMillis() - time)
-                        + "ms");
-                Log.i("purchasesResult:" + purchasesResult);
+				Log.i("Querying purchases elapsed time: " + (System.currentTimeMillis() - time) + "ms");
+				PurchasesResult purchasesResult = null;
+				if (mBillingClient != null)
+				{
+					PurchasesResult purchasesResult = mBillingClient.queryPurchases(SkuType.INAPP);
+					Log.i("purchasesResult:" + purchasesResult);
+				}
+                
                 /*
                 // If there are subscriptions supported, we add subscription rows as well
                 if (areSubscriptionsSupported()) {
@@ -440,7 +444,8 @@ public class BillingManager implements PurchasesUpdatedListener {
                             + purchasesResult.getResponseCode());
                 }
                 */
-                onQueryPurchasesFinished(purchasesResult);
+				
+				onQueryPurchasesFinished(purchasesResult);
             }
         };
 

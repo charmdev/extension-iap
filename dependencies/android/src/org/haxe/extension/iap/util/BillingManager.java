@@ -459,7 +459,7 @@ public class BillingManager implements PurchasesUpdatedListener {
 		stateListener = new BillingClientStateListener() {
             @Override
             public void onBillingSetupFinished(BillingResult billingResponse) {
-				billingResponseCode = billingResponse.getResponseCode();
+				int billingResponseCode = billingResponse.getResponseCode();
 				if (mReconnectAttempts < mSimulateFailuresUntilAttempt)
                 {
                     billingResponseCode = 6;

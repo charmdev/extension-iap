@@ -73,10 +73,10 @@ public class InAppPurchase extends Extension {
 			{
 				for (Purchase purchase : purchaseList) 
 				{
-					if(purchase.getPurchaseState() == PurchaseState.PURCHASED) {
+				//	if(purchase.getPurchaseState() == PurchaseState.PURCHASED) {
 						//String sku = purchase.getSku();
 						fireCallback("onPurchase", new Object[]{purchase.getOriginalJson(), "", purchase.getSignature()});
-					}
+				//	}
 				}
 			}
 			else
@@ -116,7 +116,7 @@ public class InAppPurchase extends Extension {
 		public void onQueryPurchasesFinished(List<Purchase> purchaseList) {
 			String jsonResp =  "{ \"purchases\":[ ";
 			for (Purchase purchase : purchaseList) {
-				if(purchase.getPurchaseState() == PurchaseState.PURCHASED) {
+			//	if (purchase.getPurchaseState() == PurchaseState.PURCHASED) {
 					for(String sku : purchase.getSkus()){
 						jsonResp += "{" +
 								"\"key\":\"" + sku +"\", " +
@@ -124,7 +124,7 @@ public class InAppPurchase extends Extension {
 								"\"itemType\":\"\"," +
 								"\"signature\":\"" + purchase.getSignature() + "\"},";
 					}
-				}
+			//	}
 			}
 			jsonResp = jsonResp.substring(0, jsonResp.length() - 1);
 			jsonResp += "]}";

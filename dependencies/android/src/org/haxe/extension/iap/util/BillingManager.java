@@ -122,8 +122,7 @@ public class BillingManager implements PurchasesUpdatedListener {
         Log.d("Creating Billing client.");
         mActivity = activity;
         mBillingUpdatesListener = updatesListener;
-    //    mBillingClient = BillingClient.newBuilder(mActivity).enablePendingPurchases().setListener(this).build();
-        mBillingClient = BillingClient.newBuilder(mActivity).setListener(this).build();
+        mBillingClient = BillingClient.newBuilder(mActivity).enablePendingPurchases().setListener(this).build();
     }
 
     /**

@@ -73,15 +73,18 @@ public class InAppPurchase extends Extension {
 			{
 				for (Purchase purchase : purchaseList) 
 				{
-				//	if(purchase.getPurchaseState() == PurchaseState.PURCHASED) {
+					if (purchase.getPurchaseState() == PurchaseState.PURCHASED) {
 						//String sku = purchase.getSku();
 						fireCallback("onPurchase", new Object[]{purchase.getOriginalJson(), "", purchase.getSignature()});
-				//	}
+					}
+					else if (purchase.getPurchaseState() == PurchaseState.PENDING) {
+						fireCallback("onPending", new Object[]{purchase.getOriginalJson(), "", purchase.getSignature()});
+					}
 				}
 			}
 			else
 			{
-				if (result.getResponseCode() ==  BillingResponseCode.USER_CANCELED)
+				if (result.getResponseCode() == BillingResponseCode.USER_CANCELED)
 				{
 					fireCallback("onCanceledPurchase", new Object[] { "canceled" });
 				}

@@ -291,6 +291,18 @@ private class IAPHandler {
 		IAP.inventory.purchaseMap.set(evt.purchase.productID, evt.purchase);
 		IAP.dispatchEvent (evt);
 	}
+	
+	///////////////////////////////////////////////////////////////////////////////////////////
+	///////////////////////////////////////////////////////////////////////////////////////////
+
+	public function onPending (response:String, itemType:String, signature:String):Void {
+		var evt:IAPEvent = new IAPEvent (IAPEvent.PURCHASE_PENDING);
+
+		evt.purchase = new Purchase(response, itemType, signature);
+		evt.productID = evt.purchase.productID;
+	//	IAP.inventory.purchaseMap.set(evt.purchase.productID, evt.purchase); // do we need this line???
+		IAP.dispatchEvent (evt);
+	}
 
 	///////////////////////////////////////////////////////////////////////////////////////////
 	///////////////////////////////////////////////////////////////////////////////////////////

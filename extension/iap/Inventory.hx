@@ -32,7 +32,17 @@ class Inventory
 				
 				for (dynItm in dynPurchases) {
 					var p = new Purchase(Reflect.field(dynItm, "value"), Reflect.field(dynItm, "itemType"), Reflect.field(dynItm, "signature"));
-					purchaseMap.set(cast Reflect.field(dynItm, "key"), p);
+					if (p.purchaseState == 1)
+					{
+						trace("Purchased: ");
+						trace(p.toString());
+						purchaseMap.set(cast Reflect.field(dynItm, "key"), p);
+					}
+					else
+					{
+						trace("Non Purchased: ");
+						trace(p.toString());
+					}
 				}
 				
 			}

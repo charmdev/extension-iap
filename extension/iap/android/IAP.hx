@@ -290,6 +290,9 @@ private class IAPHandler {
 		evt.productID = evt.purchase.productID;
 		IAP.inventory.purchaseMap.set(evt.purchase.productID, evt.purchase);
 		IAP.dispatchEvent (evt);
+
+		trace("onPurchase!!!");
+		trace(evt.purchase.toString());
 	}
 	
 	///////////////////////////////////////////////////////////////////////////////////////////
@@ -302,6 +305,9 @@ private class IAPHandler {
 		evt.productID = evt.purchase.productID;
 	//	IAP.inventory.purchaseMap.set(evt.purchase.productID, evt.purchase); // do we need this line???
 		IAP.dispatchEvent (evt);
+
+		trace("onPurchase!!!");
+		trace(evt.purchase.toString());
 	}
 
 	///////////////////////////////////////////////////////////////////////////////////////////

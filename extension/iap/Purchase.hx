@@ -3,8 +3,13 @@ import haxe.Json;
 
 class Purchase
 {
-
+	public static inline var PURCHASE_STATE_PENDING = 2;
+	public static inline var PURCHASE_STATE_PURCHASED = 1;
+	public static inline var PURCHASE_STATE_UNSPECIFIED = 0;
+	
 	public var productID:String;
+	
+	public var purchaseID:String;
 	
 	// Android Properties
 	public var itemType(default, null):String;
@@ -31,9 +36,8 @@ class Purchase
 	public var metadata : String;
 	public var purchase_id : String;
 	
-	public function new(baseObj:Dynamic, ?itemType:String, ?signature:String) 
+	public function new(baseObj:Dynamic, ?itemType:String, ?signature:String, ?purchaseState:Int) 
 	{
-
 		if (baseObj==null) {
 			return;
 		}
@@ -45,19 +49,20 @@ class Purchase
 			originalJson = cast (baseObj, String);
 			dynObj = Json.parse(originalJson);
 		}
-		 else {
+		else {
 			dynObj = baseObj;
 			originalJson = Json.stringify(dynObj);
 		}
 		
 		// Handle both Android and iOS Ids
-		productID = Reflect.hasField(dynObj, "productId")? Reflect.field(dynObj, "productId") : Reflect.field(dynObj, "productID");
+		productID = Reflect.hasField(dynObj, "productId") ? Reflect.field(dynObj, "productId") : Reflect.field(dynObj, "productID");
 		
+		// Android Properties
 		// itemType = Reflect.field(dynObj, "itemType");
 		orderId = Reflect.field(dynObj, "orderId");
 		packageName = Reflect.field(dynObj, "packageName");
 		purchaseTime = Math.floor(Reflect.field(dynObj, "purchaseTime") * 0.001);
-		purchaseState = Reflect.field(dynObj, "purchaseState");
+		this.purchaseState = purchaseState;
 		developerPayload = Reflect.field(dynObj, "developerPayload");
 		purchaseToken = Reflect.field(dynObj, "purchaseToken");
 		acknowledged = Reflect.field(dynObj, "acknowledged");
@@ -65,10 +70,18 @@ class Purchase
 		this.signature = signature;
 		this.itemType = itemType;
 		
+		// iOS Properties
 		transactionID = Reflect.field(dynObj, "transactionID");
 		transactionDate = Reflect.field(dynObj, "transactionDate");
 		
 		this.originalJson = originalJson;
+		
+		// Handle both Android and iOS Ids
+		purchaseID = orderId;
+		if (purchaseID == null)
+		{
+			purchaseID = transactionID;
+		}
 	}
 	
 	public function toString() :String {

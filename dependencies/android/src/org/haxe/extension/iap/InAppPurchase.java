@@ -125,6 +125,7 @@ public class InAppPurchase extends Extension {
 						jsonResp += "{" +
 								"\"key\":\"" + sku +"\", " +
 								"\"value\":" + purchase.getOriginalJson() + "," +
+								"\"purchaseState\":\"" + purchase.getPurchaseState() +"\", " +
 								"\"itemType\":\"\"," +
 								"\"signature\":\"" + purchase.getSignature() + "\"},";
 					}

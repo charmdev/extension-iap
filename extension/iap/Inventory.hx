@@ -8,13 +8,15 @@ package extension.iap;
 class Inventory
 {
 
-	public var productDetailsMap(default, null): Map<String, ProductDetails>;
-	public var purchaseMap(default, null): Map<String, Purchase>;
+	public var productDetailsMap(default, null):Map<String, ProductDetails>;
+	public var purchaseMap(default, null):Map<String, Purchase>;
+	public var pendingPurchases:Array<Purchase>;
 	
 	public function new(?dynObj:Dynamic) 
 	{
 		productDetailsMap = new Map();
 		purchaseMap = new Map();
+		pendingPurchases = [];
 		
 		if (dynObj != null) {
 			
@@ -31,24 +33,31 @@ class Inventory
 			if (dynPurchases != null) {
 				
 				for (dynItm in dynPurchases) {
-					var p = new Purchase(Reflect.field(dynItm, "value"), Reflect.field(dynItm, "itemType"), Reflect.field(dynItm, "signature"));
-					if (p.purchaseState == 1)
+					var purchaseState:Null<Int> = Purchase.PURCHASE_STATE_PURCHASED;
+					
+				#if android
+					purchaseState = Reflect.field(dynItm, "purchaseState");
+				#end
+					
+					var p = new Purchase(Reflect.field(dynItm, "value"), Reflect.field(dynItm, "itemType"), Reflect.field(dynItm, "signature"), purchaseState);
+					
+					if (p.purchaseState == Purchase.PURCHASE_STATE_PURCHASED)
 					{
+						purchaseMap.set(cast Reflect.field(dynItm, "key"), p);
+						
 						trace("Purchased: ");
 						trace(p.toString());
-						purchaseMap.set(cast Reflect.field(dynItm, "key"), p);
 					}
-					else
+					else if (p.purchaseState == Purchase.PURCHASE_STATE_PENDING)
 					{
-						trace("Non Purchased: ");
+						pendingPurchases.push(p);
+						
+						trace("Pending: ");
 						trace(p.toString());
 					}
 				}
-				
 			}
-			
 		}
-
 	}
 	
 	/** Returns the listing details for an in-app product. */
@@ -83,5 +92,19 @@ class Inventory
 		
         if (purchaseMap.exists(productId)) purchaseMap.remove(productId);
     }
+	
+	public function removePendingPurchase(purchaseId:String):Void {
+		var purchaseToRemove:Purchase = null;
+		for (p in pendingPurchases) {
+			if (p.purchaseID == purchaseId) {
+				purchaseToRemove = p;
+				break;
+			}
+		}
+		
+		if (purchaseToRemove != null) {
+			pendingPurchases.remove(purchaseToRemove);
+		}
+	}
 	
 }

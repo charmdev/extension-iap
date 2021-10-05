@@ -283,13 +283,14 @@ private class IAPHandler {
 	///////////////////////////////////////////////////////////////////////////////////////////
 	///////////////////////////////////////////////////////////////////////////////////////////
 
-	public function onPurchase (response:String, itemType:String, signature:String):Void {
-		var evt:IAPEvent = new IAPEvent (IAPEvent.PURCHASE_SUCCESS);
+	public function onPurchase(response:String, itemType:String, signature:String):Void {
+		var evt:IAPEvent = new IAPEvent(IAPEvent.PURCHASE_SUCCESS);
 
-		evt.purchase = new Purchase(response, itemType, signature);
+		evt.purchase = new Purchase(response, itemType, signature, Purchase.PURCHASE_STATE_PURCHASED);
 		evt.productID = evt.purchase.productID;
 		IAP.inventory.purchaseMap.set(evt.purchase.productID, evt.purchase);
-		IAP.dispatchEvent (evt);
+		IAP.inventory.removePendingPurchase(evt.purchase.purchaseID);
+		IAP.dispatchEvent(evt);
 
 		trace("onPurchase!!!");
 		trace(evt.purchase.toString());
@@ -298,15 +299,15 @@ private class IAPHandler {
 	///////////////////////////////////////////////////////////////////////////////////////////
 	///////////////////////////////////////////////////////////////////////////////////////////
 
-	public function onPending (response:String, itemType:String, signature:String):Void {
-		var evt:IAPEvent = new IAPEvent (IAPEvent.PURCHASE_PENDING);
+	public function onPending(response:String, itemType:String, signature:String):Void {
+		var evt:IAPEvent = new IAPEvent(IAPEvent.PURCHASE_PENDING);
 
-		evt.purchase = new Purchase(response, itemType, signature);
+		evt.purchase = new Purchase(response, itemType, signature, Purchase.PURCHASE_STATE_PENDING);
 		evt.productID = evt.purchase.productID;
-	//	IAP.inventory.purchaseMap.set(evt.purchase.productID, evt.purchase); // do we need this line???
-		IAP.dispatchEvent (evt);
+		IAP.inventory.pendingPurchases.push(evt.purchase);
+		IAP.dispatchEvent(evt);
 
-		trace("onPurchase!!!");
+		trace("onPending!!!");
 		trace(evt.purchase.toString());
 	}
 

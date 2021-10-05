@@ -10,6 +10,7 @@ class Purchase
 	public var productID:String;
 	
 	public var purchaseID:String;
+	public var purchaseDate:Int;
 	
 	// Android Properties
 	public var itemType(default, null):String;
@@ -77,11 +78,8 @@ class Purchase
 		this.originalJson = originalJson;
 		
 		// Handle both Android and iOS Ids
-		purchaseID = orderId;
-		if (purchaseID == null)
-		{
-			purchaseID = transactionID;
-		}
+		purchaseID = Reflect.hasField(dynObj, "orderId") ? orderId : transactionID;
+		purchaseDate = Reflect.hasField(dynObj, "purchaseTime") ? purchaseTime : transactionDate;
 	}
 	
 	public function toString() :String {

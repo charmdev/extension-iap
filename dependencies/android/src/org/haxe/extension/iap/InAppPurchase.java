@@ -121,7 +121,6 @@ public class InAppPurchase extends Extension {
 			for (Purchase purchase : purchaseList) {
 			//	if (purchase.getPurchaseState() == PurchaseState.PURCHASED) {
 					for (String sku : purchase.getSkus()) {
-						Log.d("purchaseState: " + purchase.getPurchaseState() + ", sku: " + sku);
 						jsonResp += "{" +
 								"\"key\":\"" + sku +"\", " +
 								"\"value\":" + purchase.getOriginalJson() + "," +

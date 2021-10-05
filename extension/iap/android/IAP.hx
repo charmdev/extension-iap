@@ -289,11 +289,8 @@ private class IAPHandler {
 		evt.purchase = new Purchase(response, itemType, signature, Purchase.PURCHASE_STATE_PURCHASED);
 		evt.productID = evt.purchase.productID;
 		IAP.inventory.purchaseMap.set(evt.purchase.productID, evt.purchase);
-		IAP.inventory.removePendingPurchase(evt.purchase.purchaseID);
+		IAP.inventory.addPurchase(evt.purchase);
 		IAP.dispatchEvent(evt);
-
-		trace("onPurchase!!!");
-		trace(evt.purchase.toString());
 	}
 	
 	///////////////////////////////////////////////////////////////////////////////////////////
@@ -306,9 +303,6 @@ private class IAPHandler {
 		evt.productID = evt.purchase.productID;
 		IAP.inventory.pendingPurchases.push(evt.purchase);
 		IAP.dispatchEvent(evt);
-
-		trace("onPending!!!");
-		trace(evt.purchase.toString());
 	}
 
 	///////////////////////////////////////////////////////////////////////////////////////////

@@ -92,7 +92,7 @@ class Inventory
 	
 	public function addPurchase(purchase:Purchase):Void {
 		purchaseMap.set(purchase.productID, purchase);
-		removePending(purchase);
+		erasePending(purchase.productID);
 	}
 	
 	public function addPending(purchase:Purchase):Void {

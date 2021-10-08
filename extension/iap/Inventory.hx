@@ -9,18 +9,16 @@ class Inventory
 {
 
 	public var productDetailsMap(default, null):Map<String, ProductDetails>;
-	public var purchaseMap(default, null):Map<String, Purchase>; // TODO: replace this map with `purchases`
 	
-	public var purchases(default, null):Map<String, Array<Purchase>>;
-	public var pendingPurchases(default, null):Array<Purchase>;
+	public var purchaseMap(default, null):Map<String, Purchase>;
+	public var pendingMap(default, null):Map<String, Purchase>;
 	
 	public function new(?dynObj:Dynamic) 
 	{
 		productDetailsMap = new Map();
-		purchaseMap = new Map();
 		
-		purchases = new Map<String, Array<Purchase>>();
-		pendingPurchases = [];
+		purchaseMap = new Map();
+		pendingMap = new Map();
 		
 		if (dynObj != null) {
 			
@@ -47,12 +45,11 @@ class Inventory
 					
 					if (p.purchaseState == Purchase.PURCHASE_STATE_PURCHASED)
 					{
-						purchaseMap.set(cast Reflect.field(dynItm, "key"), p);
 						addPurchase(p);
 					}
 					else if (p.purchaseState == Purchase.PURCHASE_STATE_PENDING)
 					{
-						pendingPurchases.push(p);
+						addPending(p);
 					}
 				}
 			}
@@ -88,51 +85,23 @@ class Inventory
      * a new Inventory.
      */
     public function erasePurchase(productId:String):Void {
-		// TODO: remove this method???
-        if (purchaseMap.exists(productId)) {
+		if (purchaseMap.exists(productId)) {
 			purchaseMap.remove(productId);
 		}
     }
 	
 	public function addPurchase(purchase:Purchase):Void {
-		if (!purchases.exists(purchase.productID))
-		{
-			purchases.set(purchase.productID, []);
-		}
-		
-		purchases.get(purchase.productID).push(purchase);
-		
-		removePendingPurchase(purchase);
+		purchaseMap.set(purchase.productID, purchase);
+		removePending(purchase);
 	}
 	
-	public function removePurchase(purchase:Purchase):Void {
-		if (purchases.exists(purchase.productID)) {
-			var purchaseToRemove:Purchase = null;
-			
-			for (p in purchases.get(purchase.productID)) {
-				if (p.purchaseID == purchase.purchaseID && p.purchaseDate == purchase.purchaseDate) {
-					purchaseToRemove = p;
-					break;
-				}
-			}
-			
-			if (purchaseToRemove != null) {
-				purchases.get(purchase.productID).remove(purchaseToRemove);
-			}
-		}
+	public function addPending(purchase:Purchase):Void {
+		pendingMap.set(purchase.productID, purchase);
 	}
 	
-	public function removePendingPurchase(purchase:Purchase):Void {
-		var purchaseToRemove:Purchase = null;
-		for (p in pendingPurchases) {
-			if (p.purchaseID == purchase.purchaseID && p.purchaseDate == purchase.purchaseDate) {
-				purchaseToRemove = p;
-				break;
-			}
-		}
-		
-		if (purchaseToRemove != null) {
-			pendingPurchases.remove(purchaseToRemove);
+	public function erasePending(productId:String):Void {
+		if (pendingMap.exists(productId)) {
+			pendingMap.remove(productId);
 		}
 	}
 	

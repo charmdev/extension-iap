@@ -241,7 +241,6 @@ import haxe.Json;
 				var evt:IAPEvent = new IAPEvent (IAPEvent.PURCHASE_SUCCESS);
 				evt.purchase = new Purchase(inEvent, null, null, Purchase.PURCHASE_STATE_PURCHASED);
 				evt.productID = evt.purchase.productID;
-				inventory.purchaseMap.set(evt.purchase.productID, evt.purchase);
 				inventory.addPurchase(evt.purchase);
 
 				dispatchEvent(evt);

@@ -227,10 +227,19 @@ private class IAPHandler {
 	///////////////////////////////////////////////////////////////////////////////////////////
 
 	public function onFailedConsume (response:String):Void {
-		var dynResp:Dynamic = Json.parse(response);
 		var evt:IAPEvent = new IAPEvent (IAPEvent.PURCHASE_CONSUME_FAILURE);
-		evt.productID = Reflect.field(Reflect.field(dynResp, "product"), "productId");
-		evt.message = Reflect.field(Reflect.field(dynResp, "result"), "message");
+		
+		try {
+			var dynResp:Dynamic = Json.parse(response);
+			evt.productID = Reflect.field(Reflect.field(dynResp, "product"), "productId");
+			evt.message = Reflect.field(Reflect.field(dynResp, "result"), "message");
+		}
+		catch (e:Dynamic)
+		{
+			evt.productID = "";
+			evt.message = "Caught JSONException while trying to consume product";
+		}
+		
 		IAP.dispatchEvent (evt);
 	}
 
@@ -250,10 +259,19 @@ private class IAPHandler {
 	///////////////////////////////////////////////////////////////////////////////////////////
 
 	public function onFailedAcknowledgePurchase (response:String):Void {
-		var dynResp:Dynamic = Json.parse(response);
 		var evt:IAPEvent = new IAPEvent (IAPEvent.PURCHASE_ACKNOWLEDGE_FAILURE);
-		evt.productID = Reflect.field(Reflect.field(dynResp, "product"), "productId");
-		evt.message = Reflect.field(Reflect.field(dynResp, "result"), "message");
+		
+		try {
+			var dynResp:Dynamic = Json.parse(response);
+			evt.productID = Reflect.field(Reflect.field(dynResp, "product"), "productId");
+			evt.message = Reflect.field(Reflect.field(dynResp, "result"), "message");
+		}
+		catch (e:Dynamic)
+		{
+			evt.productID = "";
+			evt.message = "Caught JSONException while trying to acknowledge purchase";
+		}
+		
 		IAP.dispatchEvent (evt);
 	}
 

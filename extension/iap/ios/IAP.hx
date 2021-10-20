@@ -186,6 +186,10 @@ import haxe.Json;
 
 		//TODO
 	}
+	
+	public static function queryInventory():Void {
+		// TODO
+	}
 
 	/**
 	 * Manually finishes a transaction from the SKPaymentQueue. If <code>manualTransactionMode</code> is false,

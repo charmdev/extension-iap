@@ -134,6 +134,11 @@ public class InAppPurchase extends Extension {
 			jsonResp += "]}";
 			fireCallback("onQueryInventoryComplete", new Object[] { jsonResp });
 		}
+		
+		@Override
+		public void onQueryPurchasesFailed() {
+			fireCallback("onQueryInventoryFailed", new Object[] { "" });
+		}
 	}
 
 	public static void buy (final String productID, final String devPayload) {
@@ -162,7 +167,7 @@ public class InAppPurchase extends Extension {
 				}
 				catch(JSONException e)
 				{
-					fireCallback("onFailedConsume", new Object[] {});
+					fireCallback("onFailedConsume", new Object[] { "" });
 				}
 			}
 		});
@@ -184,7 +189,7 @@ public class InAppPurchase extends Extension {
 				}
 				catch(JSONException e)
 				{
-					fireCallback("onFailedAcknowledgePurchase", new Object[] {});
+					fireCallback("onFailedAcknowledgePurchase", new Object[] { "" });
 				}
 			}
 		});
@@ -259,6 +264,17 @@ public class InAppPurchase extends Extension {
 		});
 	}
 	
+	public static void queryInventory() {
+		Extension.mainActivity.runOnUiThread(new Runnable() 
+		{
+			public void run()
+			{
+				if (InAppPurchase.billingManager != null) {
+					InAppPurchase.billingManager.queryInventory();
+				}
+			}
+		});
+	}
 	
 	@Override public void onDestroy () {
 		if (InAppPurchase.billingManager != null) 

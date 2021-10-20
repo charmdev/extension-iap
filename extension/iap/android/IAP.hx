@@ -111,7 +111,6 @@ import lime.system.JNI;
 		funcBuy(productID, devPayload);
 	}
 
-
 	/**
 	 * Retrieves localized information about a list of products.
 	 * 
@@ -155,7 +154,9 @@ import lime.system.JNI;
 		funcAcknowledgePurchase (purchase.originalJson, purchase.signature);
 	}
 
-	public static function queryInventory (queryItemDetails:Bool = false, moreItems:Array<String> = null):Void {}
+	public static function queryInventory ():Void {
+		funcQueryInventory();
+	}
 
 	// Getter & Setter Methods
 
@@ -202,6 +203,7 @@ import lime.system.JNI;
 	static var funcQuerySkuDetails = JNI.createStaticMethod ("org/haxe/extension/iap/InAppPurchase", "querySkuDetails", "([Ljava/lang/String;)V");
 	static var funcConsume = JNI.createStaticMethod ("org/haxe/extension/iap/InAppPurchase", "consume", "(Ljava/lang/String;Ljava/lang/String;)V");
 	static var funcAcknowledgePurchase = JNI.createStaticMethod ("org/haxe/extension/iap/InAppPurchase", "acknowledgePurchase", "(Ljava/lang/String;Ljava/lang/String;)V");
+	static var funcQueryInventory = JNI.createStaticMethod("org/haxe/extension/iap/InAppPurchase", "queryInventory", "()V");
 	static var funcCleanup = JNI.createStaticMethod("org/haxe/extension/iap/InAppPurchase", "cleanup", "()V");
 }
 
@@ -359,9 +361,18 @@ private class IAPHandler {
 	}
 
 	public function onQueryInventoryComplete(response:String):Void {
+		trace('onQueryInventoryComplete');
 
 		var dynResp:Dynamic = Json.parse(response);
 		IAP.inventory = new Inventory(dynResp);
+		IAP.dispatchEvent (new IAPEvent (IAPEvent.PURCHASE_QUERY_INVENTORY_SUCCESS));
+	}
+	
+	public function onQueryInventoryFailed(response:String):Void {
+		trace('onQueryInventoryFailed');
+
+		IAP.inventory = new Inventory(null);
+		IAP.dispatchEvent (new IAPEvent (IAPEvent.PURCHASE_QUERY_INVENTORY_FAILURE));
 	}
 
 	///////////////////////////////////////////////////////////////////////////////////////////

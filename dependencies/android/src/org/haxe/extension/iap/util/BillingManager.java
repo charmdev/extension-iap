@@ -105,6 +105,7 @@ public class BillingManager implements PurchasesUpdatedListener {
     public interface BillingUpdatesListener {
         void onBillingClientSetupFinished(final Boolean success);
         void onQueryPurchasesFinished(List<Purchase> purchases);
+        void onQueryPurchasesFailed();
         void onConsumeFinished(String token, BillingResult result);
         void onAcknowledgePurchaseFinished(String token, BillingResult result);
         void onPurchasesUpdated(List<Purchase> purchases, BillingResult result);
@@ -453,6 +454,33 @@ public class BillingManager implements PurchasesUpdatedListener {
             @Override
             public void run() {
                 mBillingUpdatesListener.onBillingClientSetupFinished(false);
+            }
+        };
+        executeServiceRequest(queryToExecute, onError);
+    }
+	
+	public void queryInventory() {
+		Log.d("Starting setup.");
+        Runnable queryToExecute = new Runnable() {
+            @Override
+            public void run() {
+                long time = System.currentTimeMillis();
+				Log.i("Querying purchases elapsed time: " + (System.currentTimeMillis() - time) + "ms");
+				PurchasesResult purchasesResult = null;
+				if (mBillingClient != null)
+				{
+					purchasesResult = mBillingClient.queryPurchases(SkuType.INAPP);
+					Log.i("purchasesResult:" + purchasesResult);
+				}
+				
+				onQueryPurchasesFinished(purchasesResult);
+            }
+        };
+
+        Runnable onError = new Runnable() {
+            @Override
+            public void run() {
+                mBillingUpdatesListener.onQueryPurchasesFailed();
             }
         };
         executeServiceRequest(queryToExecute, onError);

@@ -232,8 +232,10 @@ public class BillingManager implements PurchasesUpdatedListener {
 				else
 				{
 					mBillingUpdatesListener.onQuerySkuDetailsFinished(skuDetailsList, billingResult);
-					for (SkuDetails skuDetails : skuDetailsList) {
-						mSkuDetailsMap.put(skuDetails.getSku(), skuDetails);
+					if ((responseCode == BillingResponseCode.OK) && (skuDetailsList != null)) {
+						for (SkuDetails skuDetails : skuDetailsList) {
+							mSkuDetailsMap.put(skuDetails.getSku(), skuDetails);
+						}
 					}
 				}
 			}

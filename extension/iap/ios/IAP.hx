@@ -288,10 +288,8 @@ import haxe.Json;
 			case "productData":
 				var price = Reflect.field(inEvent, "priceAmountMicros");
 				var prod:IAProduct = { productID: Reflect.field (inEvent, "productID"), localizedTitle: Reflect.field (inEvent, "localizedTitle"), localizedDescription: Reflect.field (inEvent, "localizedDescription"), localizedPrice: Reflect.field (inEvent, "localizedPrice"), priceAmountMicros: price, price: price / 1000 / 1000, priceCurrencyCode: Reflect.field (inEvent, "priceCurrencyCode")};
+				//var prod:IAProduct = { productID: Reflect.field (inEvent, "productID"), localizedTitle: Reflect.field (inEvent, "localizedTitle"), localizedDescription: Reflect.field (inEvent, "localizedDescription"), localizedPrice: Reflect.field (inEvent, "localizedPrice"), priceAmountMicros: price * 10000, price: price / 100, priceCurrencyCode: Reflect.field (inEvent, "priceCurrencyCode")};
 				trace('iOS Product: ' + prod);
-				/*
-				var prod:IAProduct = { productID: Reflect.field (inEvent, "productID"), localizedTitle: Reflect.field (inEvent, "localizedTitle"), localizedDescription: Reflect.field (inEvent, "localizedDescription"), localizedPrice: Reflect.field (inEvent, "localizedPrice"), priceAmountMicros: price * 10000, price: price / 100, priceCurrencyCode: Reflect.field (inEvent, "priceCurrencyCode")};
-				*/
 				tempProductsData.push( prod );
 				inventory.productDetailsMap.set(prod.productID, new ProductDetails(prod));
 

@@ -1,13 +1,20 @@
 package org.haxe.extension.iap;
 
 import android.opengl.GLSurfaceView;
+import android.os.Handler;
 
+import com.android.billingclient.api.BillingClient.SkuType;
+import com.android.billingclient.api.SkuDetailsParams;
+import com.android.billingclient.api.SkuDetailsParams.Builder;
+import com.android.billingclient.api.SkuDetailsResponseListener;
 import com.android.billingclient.api.BillingClient.BillingResponseCode;
 import com.android.billingclient.api.BillingClient.SkuType;
+import com.android.billingclient.api.BillingClient;
 import com.android.billingclient.api.BillingResult;
 import com.android.billingclient.api.Purchase;
 import com.android.billingclient.api.Purchase.PurchaseState;
 import com.android.billingclient.api.SkuDetails;
+import com.android.billingclient.api.PurchasesUpdatedListener;
 
 import org.haxe.extension.Extension;
 import org.haxe.extension.iap.util.BillingManager;
@@ -21,6 +28,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+
 public class InAppPurchase extends Extension {
 	
 	private static String TAG = "BillingManager";
@@ -30,15 +38,21 @@ public class InAppPurchase extends Extension {
 	private static UpdateListener updateListener = null;
 	private static Map<String, Purchase> consumeInProgress = new HashMap<String, Purchase>();
 	private static Map<String, Purchase> acknowledgePurchaseInProgress = new HashMap<String, Purchase>();
-
+	private static Boolean complete = false;
+	
 	private static class UpdateListener implements BillingUpdatesListener {
 		@Override
 		public void onBillingClientSetupFinished(final Boolean success) {
+			InAppPurchase.complete = false;
+			
 			if (success) {
 				fireCallback("onStarted", new Object[] { "Success" });
+				Log.d("billing onStarted Success");
 			}
 			else {
 				fireCallback("onStarted", new Object[] { "Failure" });
+
+				Log.d("billing onStarted Failure");
 			}
 		}
 
@@ -108,9 +122,12 @@ public class InAppPurchase extends Extension {
 				jsonResp = jsonResp.substring(0, jsonResp.length() - 1);
 				jsonResp += "]}";
 				Log.d("onQuerySkuDetailsFinished: " + jsonResp + ", result: " + result.getDebugMessage());
+
+				InAppPurchase.complete = true;
 				fireCallback("onRequestProductDataComplete", new Object[] { jsonResp });
 			}
 			else {
+				InAppPurchase.complete = true;
 				fireCallback("onRequestProductDataComplete", new Object[] { "Failure" });
 			}
 		}
@@ -229,7 +246,22 @@ public class InAppPurchase extends Extension {
 			public void run()
 			{
 				InAppPurchase.billingManager.querySkuDetailsAsync(SkuType.INAPP, Arrays.asList(ids));
+
+				Log.d("billing querySkuDetails start");
+
+				new Handler().postDelayed(new Runnable() {
+					@Override
+					public void run() {
+						
+						Log.d("billing querySkuDetails fire after 5 sec " + InAppPurchase.complete);
+
+						if (!InAppPurchase.complete)
+							fireCallback("onRequestProductDataComplete", new Object[] { "Failure" });
+						
+					}
+				}, 5000);
 			}
+			
 		});
 	}
 	

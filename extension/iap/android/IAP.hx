@@ -344,12 +344,16 @@ private class IAPHandler {
 
 			if (dynDescriptions != null) {
 				for (dynItm in dynDescriptions) {
+					
 					prod = { productID: Reflect.field(dynItm, "productId") };
 					prod.type = Reflect.field(dynItm, "type");
-					prod.localizedPrice = Reflect.field(dynItm, "price");
-					prod.priceAmountMicros = Reflect.field(dynItm, "price_amount_micros");
+
+					var oneTimePurchaseOfferDetails:Dynamic = Reflect.field(dynItm, "oneTimePurchaseOfferDetails");
+					prod.localizedPrice = Reflect.field(oneTimePurchaseOfferDetails, "formattedPrice");
+					prod.priceAmountMicros = Reflect.field(oneTimePurchaseOfferDetails, "priceAmountMicros");
+					prod.priceCurrencyCode = Reflect.field(oneTimePurchaseOfferDetails, "priceCurrencyCode");
+					
 					prod.price = prod.priceAmountMicros / 1000 / 1000;
-					prod.priceCurrencyCode = Reflect.field(dynItm, "price_currency_code");
 					prod.localizedTitle = Reflect.field(dynItm, "title");
 					prod.localizedDescription = Reflect.field(dynItm, "description");
 					evt.productsData.push(prod);

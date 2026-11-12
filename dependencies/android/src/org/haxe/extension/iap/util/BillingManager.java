@@ -8,7 +8,6 @@ import com.android.billingclient.api.AcknowledgePurchaseParams;
 import com.android.billingclient.api.AcknowledgePurchaseResponseListener;
 import com.android.billingclient.api.BillingClient;
 import com.android.billingclient.api.BillingClient.FeatureType;
-import com.android.billingclient.api.BillingClient.SkuType;
 import com.android.billingclient.api.BillingClient.BillingResponseCode;
 import com.android.billingclient.api.BillingClientStateListener;
 import com.android.billingclient.api.BillingFlowParams;
@@ -20,6 +19,8 @@ import com.android.billingclient.api.PurchasesUpdatedListener;
 import com.android.billingclient.api.ProductDetails;
 import com.android.billingclient.api.QueryProductDetailsParams;
 import com.android.billingclient.api.ProductDetailsResponseListener;
+import com.android.billingclient.api.PendingPurchasesParams;
+import com.android.billingclient.api.QueryProductDetailsResult;
 import com.android.billingclient.api.QueryPurchasesParams;
 import com.android.billingclient.api.PurchasesResponseListener;
 import java.io.IOException;
@@ -110,7 +111,7 @@ public class BillingManager implements PurchasesUpdatedListener {
 		mActivity = activity;
 		mBillingUpdatesListener = updatesListener;
 		mBillingClient = BillingClient.newBuilder(mActivity)
-							.enablePendingPurchases()
+							.enablePendingPurchases(PendingPurchasesParams.newBuilder().enableOneTimeProducts().build())
 							.setListener(this)
 							.build();
 	}
@@ -213,7 +214,8 @@ public class BillingManager implements PurchasesUpdatedListener {
 		mSkuRequestAttemts = 0;
 		productDetailsResponseListener = new ProductDetailsResponseListener() {
 			@Override
-			public void onProductDetailsResponse(BillingResult billingResult, List<ProductDetails> productDetailsList) {
+			public void onProductDetailsResponse(BillingResult billingResult, QueryProductDetailsResult queryProductDetailsResult) {
+				List<ProductDetails> productDetailsList = queryProductDetailsResult.getProductDetailsList();
 				
 				int responseCode = billingResult.getResponseCode();
 				if (mSkuRequestAttemts < mSimulateFailuresUntilAttempt) {

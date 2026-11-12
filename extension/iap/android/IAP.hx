@@ -353,6 +353,11 @@ private class IAPHandler {
 					prod.priceAmountMicros = Reflect.field(oneTimePurchaseOfferDetails, "priceAmountMicros");
 					prod.priceCurrencyCode = Reflect.field(oneTimePurchaseOfferDetails, "priceCurrencyCode");
 					
+					if (prod.localizedPrice == null) {
+						trace("IAP: no price for product " + prod.productID);
+						continue;
+					}
+
 					prod.price = prod.priceAmountMicros / 1000 / 1000;
 					prod.localizedTitle = Reflect.field(dynItm, "title");
 					prod.localizedDescription = Reflect.field(dynItm, "description");

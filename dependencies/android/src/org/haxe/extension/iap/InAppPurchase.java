@@ -4,16 +4,14 @@ import android.opengl.GLSurfaceView;
 import android.os.Handler;
 import java.util.ArrayList;
 
-import com.android.billingclient.api.BillingClient.SkuType;
 import com.android.billingclient.api.ProductDetailsResponseListener;
 import com.android.billingclient.api.BillingClient.BillingResponseCode;
-import com.android.billingclient.api.BillingClient.SkuType;
 import com.android.billingclient.api.BillingClient;
 import com.android.billingclient.api.BillingResult;
 import com.android.billingclient.api.Purchase;
 import com.android.billingclient.api.Purchase.PurchaseState;
-import com.android.billingclient.api.SkuDetails;
 import com.android.billingclient.api.ProductDetails;
+import org.json.JSONObject;
 import com.android.billingclient.api.QueryProductDetailsParams;
 
 import org.haxe.extension.Extension;
@@ -127,13 +125,10 @@ public class InAppPurchase extends Extension {
 				String jsonResp =  "{ \"products\":[ ";
 
 				for (ProductDetails sku : purchaseList) {
-					String resSku = sku.toString();
-
-					int promS = resSku.indexOf("jsonString=");
-					int promE = resSku.indexOf("}}");
-
-					String promRes = resSku.substring(promS+12, promE+2);
-					jsonResp += promRes + ",";
+					String productJson = InAppPurchase.productJson(sku);
+					if (productJson != null) {
+						jsonResp += productJson + ",";
+					}
 				}
 
 				jsonResp = jsonResp.substring(0, jsonResp.length() - 1);
@@ -157,7 +152,7 @@ public class InAppPurchase extends Extension {
 		public void onQueryPurchasesFinished(List<Purchase> purchaseList) {
 			String jsonResp =  "{ \"purchases\":[ ";
 			for (Purchase purchase : purchaseList) {
-				for (String sku : purchase.getSkus()) {
+				for (String sku : purchase.getProducts()) {
 					jsonResp += "{" +
 							"\"key\":\"" + sku +"\", " +
 							"\"value\":" + purchase.getOriginalJson() + "," +
@@ -258,6 +253,43 @@ public class InAppPurchase extends Extension {
 					InAppPurchase.callback.call(name, payload);
 				}
 			});
+		}
+	}
+
+	private static final String PRODUCT_JSON_START = "jsonString='";
+	private static final String PRODUCT_JSON_END = "', parsedJson=";
+
+	// ProductDetails has no public getter for the original JSON, so it is taken from toString()
+	private static String productJson(ProductDetails sku) {
+		String resSku = sku.toString();
+		int start = resSku.indexOf(PRODUCT_JSON_START);
+		int end = resSku.indexOf(PRODUCT_JSON_END, start);
+
+		try {
+			JSONObject json = (start >= 0 && end > start)
+				? new JSONObject(resSku.substring(start + PRODUCT_JSON_START.length(), end))
+				: new JSONObject().put("productId", sku.getProductId());
+
+			// Play now sends an empty oneTimePurchaseOfferDetails and the price in oneTimePurchaseOfferDetailsList
+			ProductDetails.OneTimePurchaseOfferDetails offer = sku.getOneTimePurchaseOfferDetails();
+			List<ProductDetails.OneTimePurchaseOfferDetails> offers = sku.getOneTimePurchaseOfferDetailsList();
+			if (offer == null && offers != null && !offers.isEmpty()) {
+				offer = offers.get(0);
+			}
+
+			JSONObject currentOffer = json.optJSONObject("oneTimePurchaseOfferDetails");
+			if ((currentOffer == null || !currentOffer.has("formattedPrice")) && offer != null) {
+				json.put("oneTimePurchaseOfferDetails", new JSONObject()
+					.put("formattedPrice", offer.getFormattedPrice())
+					.put("priceAmountMicros", offer.getPriceAmountMicros())
+					.put("priceCurrencyCode", offer.getPriceCurrencyCode()));
+			}
+
+			return json.toString();
+		}
+		catch (JSONException e) {
+			Log.d("BILLING cannot read product details " + sku.getProductId() + ": " + e);
+			return null;
 		}
 	}
 
